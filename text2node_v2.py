@@ -7,17 +7,12 @@
 # The code also outputs the original co-occurrence matrix and id2word in pickled format.
 
 import sys
-import os
-import time
+# import os
 import re
 from tqdm import tqdm
 from multiprocessing import Pool
-from functools import partial
-import pickle
 
-import numpy as np
-from scipy.sparse import csr_matrix
-import matplotlib.pyplot as plt
+# import numpy as np
 
 # gensim
 import gensim
@@ -51,6 +46,8 @@ def preprocessAll(filename):
                 sys.stdout.flush()
                 sys.stdout.write(str(line_cnt) + " lines processed.\r")
             line_cnt += 1
+            # if line_cnt >= 2000000:
+            #     break
             preprocessed = preprocess(line, analyzer)
             all_text.append(preprocessed)
 
@@ -73,7 +70,7 @@ def removeWiki(token):
 # text is list of lists of tokens
 def getTokenFreq(text, min_c=10):
     token_freq = {}
-    for sen in text:
+    for sen in tqdm(text):
         for t in sen:
             if token_freq.get(t) is None:
                 token_freq[t] = 0
@@ -91,11 +88,10 @@ def getTokenFreq(text, min_c=10):
 
 # Get word2id and id2word correspondence
 def getCorrespondence(token_freq):
-    N = len(token_freq)
     word2id = {}
     id2word = []
     idx = 0
-    for k, v in token_freq.items():
+    for k, _ in token_freq.items():
         word2id[k] = idx
         idx += 1
         id2word.append(k)
@@ -105,7 +101,6 @@ def getCorrespondence(token_freq):
 # Generate co-occurrence matrix
 def getCooccur(text, word2id, id2word, win=5):
     print("Start getCooccur---")
-    N = len(id2word)
     edge_dict = {}
     for sen in tqdm(text):
         sen_len = len(sen)
@@ -168,28 +163,28 @@ def main(train_filename, min_count=10):
     print("Finished getCooccur!!!")
 
     print("Start outputting id2word---")
-    OUTFILE_id2word = open('id2word', 'w')
+    OUTFILE_id2word = open('output/id2word', 'w')
     for idx, word in enumerate(id2word):
         OUTFILE_id2word.write('{} {}\n'.format(idx, word))
     OUTFILE_id2word.close()
     print("Finished outputting id2word!!!")
 
     edge_list = [(key, value) for key, value in edge_dict.items()]
-    with open("output/id2word.pkl", 'wb') as f:
-        pickle.dump(id2word, f)
-    with open("output/edgelist.pkl", 'wb') as f:
-        pickle.dump(edge_list, f)
+    # with open("output/id2word.pkl", 'wb') as f:
+    #     pickle.dump(id2word, f)
+    # with open("output/edgelist.pkl", 'wb') as f:
+    #     pickle.dump(edge_list, f)
 
     print("Start outputting edge list---")
     N = len(edge_list)
-    size = 2000000
-    n_proc = N / size
-    if n % size != 0:
+    size = 50000000
+    n_proc = N // size
+    if N % size != 0:
         n_proc += 1
 
     print("There are", n_proc, "threads in total.")
     with Pool(n_proc) as p:
-        p.starmap(multiOutput, [(i, edge_list[i * size, (i + 1) * size])
+        p.starmap(multiOutput, [(i, edge_list[i * size: (i + 1) * size])
                                 for i in range(n_proc)])
 
     print("Finished outputting edge list!!!")
