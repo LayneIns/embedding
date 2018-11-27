@@ -1,5 +1,8 @@
-# Author: Hui Liu
-# Date: Nov. 2018
+'''
+@Author: Hui Liu
+@Date: 2018-11-20 15:47:15
+@github: https://github.com/LayneIns
+'''
 
 # This code takes input of format (i, j, weight) with i < j,
 # and outputs both (i, j, weight) and (j, i, weight).
@@ -9,20 +12,20 @@
 import sys
 import os
 import argparse
+from tqdm import tqdm
 
 import numpy as np
 
 
 def main(infilename, outfilename):
-    dt = np.dtype([('id1', np.int32), ('id2', np.int32), ('weight', np.float64)])
-    dt1 = np.loadtxt(infilename, dtype=dt)
-    print(dt1.shape)
-    dt2 = np.zeros(dt1.shape, dtype=dt)
-    dt2[:, 0] = dt1[:, 1]
-    dt2[:, 1] = dt1[:, 0]
-    dt2[:, 2] = dt1[:, 2]
-    dt = np.concatenate((dt1, dt2), axis=0)
-    np.savetxt(outfilename+".line", dt, fmt='%d %d %.19f')
+    with open(infilename) as fin:
+        with open(outfilename, "w") as fout:
+            lines = fin.readlines()
+            for line in tqdm(lines):
+                line = line.strip()
+                id1, id2, weight = line.split()
+                fout.write("{} {} {}\n".format(id1, id2, weight)) 
+                fout.write("{} {} {}\n".format(id2, id1, weight)) 
 
 
 if __name__ == '__main__':

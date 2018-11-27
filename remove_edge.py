@@ -1,5 +1,8 @@
-# Author: Hui Liu
-# Date: Nov. 2018
+'''
+@Author: Hui Liu
+@Date: 2018-11-20 13:50:29
+@github: https://github.com/LayneIns
+'''
 
 # This code takes the separated edge files and combines them, while filtering 
 # out the edges with a weight that is less than the threshold.
@@ -24,6 +27,7 @@ def mergefile(location, num, threshold):
                     sys.stdout.flush()
                     sys.stdout.write(str(line_cnt)+"\r")
                 line_cnt += 1
+
                 id1, id2, weight = line.strip().split()
                 weight = int(weight)
                 if weight >= threshold:
@@ -37,7 +41,7 @@ def mergefile(location, num, threshold):
 def output(output_file, edge_list, max_weight):
     with open(output_file, "w") as fout:
         for edge in tqdm(edge_list):
-            fout.write("{} {} {}\n".format(edge[0], edge[1], edge[2]/max_weight))
+            fout.write("{} {} {}\n".format(edge[0], edge[1], edge[2]))
 
 
 if __name__ == "__main__":

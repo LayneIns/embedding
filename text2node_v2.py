@@ -1,5 +1,8 @@
-# Author: William (Mingyuan) Zhang
-# Date: Sept. 2018
+'''
+@Author: Hui Liu
+@Date: 2018-11-19 10:06:13
+@github: https://github.com/LayneIns
+'''
 
 # This code takes a training text file, and outputs co-occurrence matrix in format (i, j, weight),
 # and an id2word file that maps id to the corresponding word.
@@ -7,7 +10,7 @@
 # The code also outputs the original co-occurrence matrix and id2word in pickled format.
 
 import sys
-# import os
+import os
 import re
 from tqdm import tqdm
 from multiprocessing import Pool
@@ -135,9 +138,9 @@ def splitIdx(arr, size):
 
 
 # Helper function for multi-threaded output
-def multiOutput(id, edge_list):
+def multiOutput(id, edge_list, min_count):
     M = len(edge_list)
-    OUTFILE = open('./output/edgelist_' + str(id), 'w')
+    OUTFILE = open('./output/'+ str(min_count) + '/edgelist_' + str(id), 'w')
     for i in tqdm(range(M)):
         id1, id2 = edge_list[i][0].split("_")
         OUTFILE.write('{} {} {}\n'.format(id1, id2, edge_list[i][1]))
@@ -163,7 +166,7 @@ def main(train_filename, min_count=10):
     print("Finished getCooccur!!!")
 
     print("Start outputting id2word---")
-    OUTFILE_id2word = open('output/id2word', 'w')
+    OUTFILE_id2word = open('output/id2word_'+str(min_count), 'w')
     for idx, word in enumerate(id2word):
         OUTFILE_id2word.write('{} {}\n'.format(idx, word))
     OUTFILE_id2word.close()
@@ -184,7 +187,7 @@ def main(train_filename, min_count=10):
 
     print("There are", n_proc, "threads in total.")
     with Pool(n_proc) as p:
-        p.starmap(multiOutput, [(i, edge_list[i * size: (i + 1) * size])
+        p.starmap(multiOutput, [(i, edge_list[i * size: (i + 1) * size], min_count)
                                 for i in range(n_proc)])
 
     print("Finished outputting edge list!!!")
@@ -197,5 +200,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
     filename = args.infile
     min_count = args.min
+
+    if not os.path.exists(os.path.join("output/", str(min_count))):
+        os.makedirs(os.path.join("output/", str(min_count)))
 
     main(train_filename=filename, min_count=min_count)
