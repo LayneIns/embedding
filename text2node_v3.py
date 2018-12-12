@@ -12,6 +12,7 @@
 import sys
 import os
 import re
+import unicodedata
 from tqdm import tqdm
 from multiprocessing import Pool
 
@@ -29,29 +30,42 @@ from sklearn.feature_extraction.text import HashingVectorizer
 
 
 # Preprocess text using given analyzer
-def preprocess(text, analyzer):
-    preprocessed = analyzer(text)
-    return preprocessed
+# def preprocess(text, analyzer):
+#     preprocessed = analyzer(text)
+#     return preprocessed
+
+
+def preprocess(sent):
+    sent = sent.strip().lower()#.split(' ')
+    # ret = ''.join(c for c in unicodedata.normalize('NFD', sent) if unicodedata.category(c) != 'Mn')
+    return sent.split(' ')
+
+def skip_line(sent):
+    excludes = ['colspan', 'rowspan']
+    skip = False
+    for ex in excludes:
+        if ex in sent:
+            skip = True
+            break
+    return skip
 
 
 # Preprocess all texts in the file
 # tokenization, removal of stopwords
 def preprocessAll(filename, percent):
-    vectorizer = TfidfVectorizer(strip_accents='unicode', stop_words=None)
-    analyzer = vectorizer.build_analyzer()
+    # vectorizer = TfidfVectorizer(strip_accents='unicode', stop_words=None)
+    # analyzer = vectorizer.build_analyzer()
     all_text = []
-    line_cnt = 0
     with open(filename, 'r') as f:
-        for line in f:
-            if line_cnt % 10000 == 0:
-                sys.stdout.flush()
-                sys.stdout.write(" " * 25 + '\r')
-                sys.stdout.flush()
-                sys.stdout.write(str(line_cnt) + " lines processed.\r")
-            line_cnt += 1
+        lines = f.readlines()
+        for line in tqdm(lines):
             # if line_cnt >= 2000000:
             #     break
-            preprocessed = preprocess(line, analyzer)
+            # preprocessed = preprocess(line, analyzer)
+
+            if skip_line(line):
+                continue
+            preprocessed = preprocess(line)
             all_text.append(preprocessed)
     
     line_cnt = int(len(all_text)*percent)
@@ -168,7 +182,7 @@ def main(train_filename, min_count=10, percent=1.0, id2word_name='id2word_'):
     print("Finished getCooccur!!!")
 
     print("Start outputting id2word---")
-    OUTFILE_id2word = open('output/' + str(min_count) + '/'+id2word_name+str(min_count), 'w')
+    OUTFILE_id2word = open(id2word_name, 'w')
     for idx, word in enumerate(id2word):
         OUTFILE_id2word.write('{} {}\n'.format(idx, word))
     OUTFILE_id2word.close()
